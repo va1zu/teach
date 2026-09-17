@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Квиз-платформа</title>
+
+    <link rel="icon" id="site-favicon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div class="main-wrap">
+        <div class="paper-grain" aria-hidden="true"></div>
+
+        <div id="menu" class="screen active">
+            <section class="hero-panel">
+                <div class="hero-panel__backdrop" aria-hidden="true"></div>
+                <div class="hero-panel__content">
+                    <p id="site-tagline" class="eyebrow">Интерактивный квиз</p>
+                    <div id="logo-box" class="logo-box logo-box--hidden">
+                        <div class="logo-ring" aria-hidden="true"></div>
+                        <img id="site-logo" src="" alt="Логотип" class="logo-img" draggable="false">
+                    </div>
+                    <h1 id="site-title" class="main-title">Квиз-платформа</h1>
+                    <p id="site-subtitle" class="sub-title"></p>
+
+                    <div class="hero-stats">
+                        <div class="stat-chip">
+                            <span id="menu-game-count">0</span>
+                            <small id="stat-themes-label">тем</small>
+                        </div>
+                        <div class="stat-chip">
+                            <span id="menu-time-limit">60</span>
+                            <small id="stat-time-label">сек/вопрос</small>
+                        </div>
+                        <div class="stat-chip">
+                            <span id="menu-leader-count">0</span>
+                            <small id="stat-leaders-label">в рейтинге</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="content-pad content-pad--menu">
+                <section class="panel-card panel-card--soft">
+                    <div class="section-heading">
+                        <div>
+                            <p id="menu-kicker" class="section-kicker">Быстрый старт</p>
+                            <h3 class="section-title section-title--left"><span id="menu-section-title">Выберите тему</span></h3>
+                        </div>
+                        <p id="menu-section-copy" class="section-copy">Темы запускаются в один клик. На каждый вопрос даётся ограниченное время, а при ошибке открывается окно с пояснением.</p>
+                    </div>
+
+                    <div id="game-list-container" class="theme-grid">
+                        <p class="text-center text-gray">Загрузка данных...</p>
+                    </div>
+                </section>
+
+                <section class="panel-card panel-card--accent">
+                    <div class="section-heading section-heading--compact">
+                        <div>
+                            <p id="nav-kicker" class="section-kicker">Навигация</p>
+                            <h3 class="section-title section-title--left"><span id="nav-title">Что можно сделать</span></h3>
+                        </div>
+                    </div>
+
+                    <div class="menu-actions">
+                        <button type="button" onclick="window.showLeaderboard()" class="btn-gold">Таблица лидеров</button>
+                        <button type="button" onclick="window.showFeedbackScreen()" class="btn-small">Оставить пожелание по сайту</button>
+                        <button type="button" onclick="window.showLogin()" class="btn-clear">Служебный вход в админ-панель</button>
+                    </div>
+                </section>
+
+                <div id="menu-hint" class="info-note">
+                    <strong>Подсказка:</strong> сначала выберите тему, затем отвечайте на вопросы подряд. Итоговый результат можно сохранить в рейтинг.
+                </div>
+            </div>
+        </div>
+
+        <div id="login" class="screen">
+            <div class="content-pad screen-shell">
+                <section class="panel-card panel-card--center">
+                    <p class="section-kicker">Служебный режим</p>
+                    <h2>Вход в админ-панель</h2>
+                    <p class="screen-copy">Введите код доступа, чтобы управлять настройками сайта, темами, вопросами и сообщениями обратной связи.</p>
+
+                    <div class="form-grid">
+                        <label class="input-label" for="admin-pass">Код доступа</label>
+                        <input type="password" id="admin-pass" placeholder="Введите код доступа" class="input-box input-box--center">
+                    </div>
+
+                    <div class="button-stack">
+                        <button type="button" onclick="window.checkLogin()" class="btn-red">Войти в панель</button>
+                        <button type="button" onclick="window.showMenu()" class="btn-dark">Назад в меню</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div id="admin" class="screen">
+            <div class="content-pad screen-shell">
+                <section class="panel-card">
+                    <div class="screen-head">
+                        <div>
+                            <p class="section-kicker">Управление</p>
+                            <h2>Админ-панель</h2>
+                        </div>
+                        <p class="screen-copy">Настройте внешний вид сайта, добавляйте темы с вопросами и просматривайте пожелания пользователей.</p>
+                    </div>
+
+                    <div class="tabs tabs--three">
+                        <button type="button" id="tab-settings" onclick="window.switchAdminTab('settings')" class="btn-gold tab-active">Сайт</button>
+                        <button type="button" id="tab-games" onclick="window.switchAdminTab('games')" class="btn-gold">Темы</button>
+                        <button type="button" id="tab-feedback" onclick="window.switchAdminTab('feedback')" class="btn-gold">Почта (<span id="fb-count">0</span>)</button>
+                    </div>
+
+                    <div id="admin-section-settings">
+                        <div class="helper-row">
+                            <p class="text-gray">Настройте название, логотип, фоны и цвета — сайт автоматически адаптируется под любую тематику.</p>
+                        </div>
+
+                        <div class="settings-group">
+                            <p class="settings-group__title">Основное</p>
+                            <div class="form-grid">
+                                <label class="input-label" for="set-site-name">Название сайта</label>
+                                <input type="text" id="set-site-name" placeholder="Например: Квиз по биологии" class="input-box">
+
+                                <label class="input-label" for="set-tagline">Слоган (над логотипом)</label>
+                                <input type="text" id="set-tagline" placeholder="Например: Интерактивный квиз" class="input-box">
+
+                                <label class="input-label" for="set-subtitle">Подзаголовок</label>
+                                <input type="text" id="set-subtitle" placeholder="Краткое описание сайта" class="input-box">
+
+                                <label class="input-label" for="set-time-limit">Время на вопрос (сек)</label>
+                                <input type="number" id="set-time-limit" min="5" max="300" value="60" class="input-box">
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <p class="settings-group__title">Изображения (только ссылки)</p>
+                            <p class="text-gray url-hint">Вставьте прямую ссылку на картинку с любого хостинга: Imgur, GitHub, Яндекс.Диск (публичная ссылка) и т.д.</p>
+                            <div class="form-grid">
+                                <label class="input-label" for="set-logo-url">Логотип</label>
+                                <input type="url" id="set-logo-url" placeholder="https://example.com/logo.png" class="input-box">
+                                <img id="preview-logo" class="img-preview" alt="" hidden>
+
+                                <label class="input-label" for="set-body-bg-url">Фон страницы</label>
+                                <input type="url" id="set-body-bg-url" placeholder="https://example.com/bg.jpg" class="input-box">
+                                <img id="preview-body-bg" class="img-preview img-preview--wide" alt="" hidden>
+
+                                <label class="input-label" for="set-hero-bg-url">Фон шапки</label>
+                                <input type="url" id="set-hero-bg-url" placeholder="https://example.com/hero.jpg" class="input-box">
+                                <img id="preview-hero-bg" class="img-preview img-preview--wide" alt="" hidden>
+
+                                <label class="input-label" for="set-favicon-url">Favicon</label>
+                                <input type="url" id="set-favicon-url" placeholder="https://example.com/icon.png" class="input-box">
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <p class="settings-group__title">Цвета</p>
+                            <div class="color-grid">
+                                <label class="color-field">
+                                    <span class="input-label">Основной</span>
+                                    <input type="color" id="set-color-primary" value="#2563eb">
+                                </label>
+                                <label class="color-field">
+                                    <span class="input-label">Тёмный</span>
+                                    <input type="color" id="set-color-primary-dark" value="#1e40af">
+                                </label>
+                                <label class="color-field">
+                                    <span class="input-label">Акцент</span>
+                                    <input type="color" id="set-color-gold" value="#475569">
+                                </label>
+                                <label class="color-field">
+                                    <span class="input-label">Успех</span>
+                                    <input type="color" id="set-color-accent" value="#059669">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <p class="settings-group__title">Тексты на главной</p>
+                            <div class="form-grid">
+                                <label class="input-label" for="set-menu-copy">Описание блока «Выберите тему»</label>
+                                <textarea id="set-menu-copy" class="input-box" rows="3"></textarea>
+
+                                <label class="input-label" for="set-menu-hint">Подсказка внизу страницы</label>
+                                <textarea id="set-menu-hint" class="input-box" rows="2"></textarea>
+
+                                <label class="input-label" for="set-fact-label">Подпись пояснения в игре</label>
+                                <input type="text" id="set-fact-label" placeholder="Пояснение" class="input-box">
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="window.saveSiteSettings()" class="btn-red">Сохранить настройки сайта</button>
+
+                        <div class="settings-group settings-group--highlight">
+                            <p class="settings-group__title">Онлайн-база Firebase</p>
+                            <p class="text-gray">Все темы, вопросы и настройки автоматически сохраняются в <strong>Firebase Realtime Database</strong>. Ученики на GitHub Pages сразу видят изменения — как в Google-таблице, без ручной загрузки файлов.</p>
+                            <ol class="setup-steps">
+                                <li>Создайте проект на <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a></li>
+                                <li>Включите <strong>Realtime Database</strong> → скопируйте блок настроек в <code>config.js</code> → <code>firebase</code></li>
+                                <li>Вставьте правила из <code>firebase-rules.json</code> → залейте сайт на GitHub</li>
+                            </ol>
+                            <p class="text-gray">Подробно по шагам: <strong>ИНСТРУКЦИЯ.txt</strong>. После настройки каждое сохранение в админке уходит в Firebase автоматически.</p>
+                            <p id="cloud-sync-indicator" class="cloud-sync-badge" aria-live="polite"></p>
+                            <div class="button-row">
+                                <button type="button" onclick="window.testFirebaseConnection()" class="btn-red">Проверить Firebase</button>
+                                <button type="button" onclick="window.loadFromFirebase()" class="btn-gold">Обновить из Firebase</button>
+                                <button type="button" onclick="window.pushToFirebaseNow()" class="btn-dark">Отправить всё в Firebase</button>
+                            </div>
+                            <p id="cloud-status" class="upload-status text-gray" aria-live="polite"></p>
+                            <p class="text-gray">Резервная копия на компьютер: <code data-export-filename>data.json</code></p>
+                            <div class="button-row">
+                                <button type="button" onclick="window.exportData()" class="btn-gold">Скачать базу (<span data-export-filename>data.json</span>)</button>
+                                <label class="btn-dark file-label">
+                                    Загрузить из файла
+                                    <input type="file" id="import-data-file" accept=".json,application/json" hidden>
+                                </label>
+                                <button type="button" onclick="window.reloadFromServer()" class="btn-dark">Резерв: с GitHub-файла</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="admin-section-games" style="display: none;">
+                        <div class="helper-row">
+                            <p class="text-gray">В каждой теме можно хранить набор вопросов с фотографиями, датами и поиском ошибки.</p>
+                        </div>
+                        <button type="button" onclick="window.createNewGame()" class="btn-green">Добавить тему</button>
+                        <div id="admin-games-list" class="item-list"></div>
+                    </div>
+
+                    <div id="admin-section-feedback" style="display: none;">
+                        <div class="helper-row">
+                            <p class="text-gray">Здесь отображаются все пожелания и предложения, оставленные посетителями сайта.</p>
+                        </div>
+                        <div id="admin-feedback-list" class="item-list"></div>
+                    </div>
+
+                    <button type="button" onclick="window.showMenu()" class="btn-dark mt-20">Выйти из панели</button>
+                </section>
+            </div>
+        </div>
+
+        <div id="manager" class="screen">
+            <div class="content-pad screen-shell">
+                <section class="panel-card">
+                    <div class="screen-head">
+                        <div>
+                            <p class="section-kicker">Редактор темы</p>
+                            <h2 id="manager-title">Редактирование темы</h2>
+                        </div>
+                        <p id="manager-current-theme" class="screen-copy">Здесь можно просмотреть все вопросы выбранной темы и быстро перейти к редактированию.</p>
+                    </div>
+
+                    <button type="button" onclick="window.openEditor()" class="btn-green">Добавить вопрос</button>
+                    <div id="admin-questions-list" class="item-list"></div>
+                    <button type="button" onclick="window.switchScreen('admin')" class="btn-dark">Назад к списку тем</button>
+                </section>
+            </div>
+        </div>
+
+        <div id="editor" class="screen">
+            <div class="content-pad screen-shell">
+                <section class="panel-card">
+                    <div class="screen-head">
+                        <div>
+                            <p class="section-kicker">Редактирование вопроса</p>
+                            <h2 id="editor-title">Новый вопрос</h2>
+                        </div>
+                        <p class="screen-copy">Укажите правильный вариант, добавьте пояснение и при необходимости изображение. Во время игры варианты ответов перемешиваются автоматически.</p>
+                    </div>
+
+                    <div class="form-grid">
+                        <label class="input-label" for="edit-type">Тип вопроса</label>
+                        <select id="edit-type" class="input-box" onchange="window.toggleEditorFields()">
+                            <option value="choice">Угадай правильный ответ</option>
+                            <option value="photo">Угадай по фото</option>
+                            <option value="date">Сопоставь дату и событие</option>
+                            <option value="error">Найди ошибку в тексте</option>
+                        </select>
+
+                        <label class="input-label" for="edit-q">Текст вопроса</label>
+                        <textarea id="edit-q" placeholder="Введите текст вопроса" class="input-box" rows="4"></textarea>
+
+                        <div id="div-edit-img">
+                            <label class="input-label" for="edit-img">Ссылка на изображение</label>
+                            <input type="url" id="edit-img" placeholder="https://example.com/photo.jpg" class="input-box">
+                            <img id="preview-edit-img" class="img-preview img-preview--wide" alt="" hidden>
+                        </div>
+
+                        <div class="answers-box">
+                            <div class="answers-box__head">
+                                <p class="section-kicker">Варианты ответа</p>
+                                <p class="text-gray">Заполните минимум два варианта и выберите, какой из них считается правильным.</p>
+                            </div>
+                            <input type="text" id="edit-opt0" placeholder="Вариант 1" class="input-box">
+                            <input type="text" id="edit-opt1" placeholder="Вариант 2" class="input-box">
+                            <input type="text" id="edit-opt2" placeholder="Вариант 3" class="input-box">
+                            <input type="text" id="edit-opt3" placeholder="Вариант 4" class="input-box">
+                        </div>
+
+                        <label class="input-label" for="edit-correct">Правильный вариант</label>
+                        <select id="edit-correct" class="input-box">
+                            <option value="0">Вариант 1</option>
+                            <option value="1">Вариант 2</option>
+                            <option value="2">Вариант 3</option>
+                            <option value="3">Вариант 4</option>
+                        </select>
+
+                        <label class="input-label" for="edit-fact">Пояснение</label>
+                        <textarea id="edit-fact" placeholder="Этот текст появится в окне объяснения после неверного ответа или окончания времени." class="input-box" rows="5"></textarea>
+                    </div>
+
+                    <div class="button-stack">
+                        <button type="button" onclick="window.saveQuestion()" class="btn-red">Сохранить вопрос</button>
+                        <button type="button" onclick="window.switchScreen('manager')" class="btn-dark">Отменить</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div id="game" class="screen">
+            <div class="game-top">
+                <div class="game-top__meta">
+                    <p class="eyebrow eyebrow--light">Активная тема</p>
+                    <div id="game-title-display" class="game-title">Тема</div>
+                </div>
+
+                <div class="timer-box">
+                    <span class="timer-box__label">Время</span>
+                    <strong><span id="timer-seconds">60</span> сек</strong>
+                </div>
+
+                <div class="game-step-wrap">
+                    <span class="game-step-label">Вопрос</span>
+                    <div id="game-step" class="game-step">1 / 1</div>
+                </div>
+            </div>
+
+            <div class="content-pad content-pad--game">
+                <div class="progress-strip">
+                    <div class="progress-strip__bar">
+                        <span id="game-progress-fill"></span>
+                    </div>
+                    <span id="game-progress-text" class="progress-strip__text">Прогресс: 1 из 1</span>
+                </div>
+
+                <section class="panel-card panel-card--question">
+                    <div class="question-head">
+                        <span id="game-format-label" class="task-badge" data-type="photo">Угадай по фото</span>
+                        <p id="game-support-text" class="question-tip">Выберите один правильный ответ до истечения времени.</p>
+                    </div>
+
+                    <h3 id="game-question" class="question-text">Текст вопроса...</h3>
+
+                    <div id="photo-container" class="photo-frame">
+                        <img id="game-photo" src="" alt="Фото задания" draggable="false">
+                    </div>
+
+                    <div id="game-options" class="options-grid"></div>
+                </section>
+            </div>
+        </div>
+
+        <div id="answer-modal" class="answer-modal" hidden>
+            <div class="answer-modal__backdrop" aria-hidden="true"></div>
+            <section class="answer-modal__card" role="dialog" aria-modal="true" aria-labelledby="answer-modal-title">
+                <p class="section-kicker">Разбор вопроса</p>
+                <h3 id="answer-modal-title" class="answer-modal__title">Пояснение</h3>
+                <p id="answer-modal-status" class="answer-modal__status">Таймер остановлен. Прочитайте пояснение и продолжите квиз.</p>
+
+                <div id="answer-modal-correct-block" class="answer-modal__block">
+                    <span class="answer-modal__label">Правильный ответ</span>
+                    <strong id="answer-modal-correct" class="answer-modal__answer">—</strong>
+                </div>
+
+                <div class="answer-modal__block">
+                    <span id="answer-modal-fact-label" class="answer-modal__label">Пояснение</span>
+                    <p id="answer-modal-fact" class="answer-modal__fact">—</p>
+                </div>
+
+                <button type="button" id="answer-modal-continue" class="btn-red">Продолжить</button>
+            </section>
+        </div>
+
+        <div id="result" class="screen">
+            <div class="content-pad screen-shell">
+                <section class="panel-card panel-card--center result-card">
+                    <p class="section-kicker">Итог прохождения</p>
+                    <h2 id="result-title">Тема пройдена</h2>
+                    <p id="result-caption" class="screen-copy">Вы завершили квиз. При желании можно сохранить результат в общем рейтинге.</p>
+
+                    <div class="result-highlight">
+                        <span class="result-label">Ваш результат</span>
+                        <span id="final-score" class="score-big">0 из 0</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <label class="input-label" for="player-name">Имя для рейтинга</label>
+                        <input type="text" id="player-name" placeholder="Введите ваше имя" class="input-box input-box--center">
+                    </div>
+
+                    <div class="button-stack">
+                        <button type="button" onclick="window.submitScore()" class="btn-red">Сохранить в рейтинг</button>
+                        <button type="button" onclick="window.showMenu()" class="btn-clear">Вернуться в меню</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div id="lider" class="screen">
+            <div class="content-pad screen-shell">
+                <section class="panel-card">
+                    <div class="screen-head screen-head--split">
+                        <div>
+                            <p id="leaderboard-kicker" class="section-kicker">Рейтинг игроков</p>
+                            <h2 id="leaderboard-title">Доска почёта</h2>
+                        </div>
+                        <div class="summary-pill">
+                            <span id="leaderboard-total">0</span>
+                            <small>записей</small>
+                        </div>
+                    </div>
+
+                    <div id="leader-data" class="leader-col"></div>
+                    <button type="button" onclick="window.showMenu()" class="btn-dark mt-20">Вернуться в меню</button>
+                </section>
+            </div>
+        </div>
+
+        <div id="feedback-screen" class="screen">
+            <div class="content-pad screen-shell">
+                <section class="panel-card panel-card--center">
+                    <p id="feedback-kicker" class="section-kicker">Диалог с посетителями</p>
+                    <h2 id="feedback-title">Обратная связь</h2>
+                    <p class="screen-copy">Напишите, чего не хватает на сайте или что можно улучшить. Сообщение сразу попадёт в админ-панель.</p>
+
+                    <div class="form-grid">
+                        <label class="input-label" for="fb-name">Ваше имя</label>
+                        <input type="text" id="fb-name" placeholder="Например: Алексей" class="input-box">
+
+                        <label class="input-label" for="fb-message">Сообщение</label>
+                        <textarea id="fb-message" placeholder="Я бы хотел увидеть..." class="input-box" rows="5"></textarea>
+                    </div>
+
+                    <div class="button-stack">
+                        <button type="button" onclick="window.submitFeedback()" class="btn-green">Отправить сообщение</button>
+                        <button type="button" onclick="window.showMenu()" class="btn-dark">Вернуться в меню</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

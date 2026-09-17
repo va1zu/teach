@@ -1,0 +1,38 @@
+{
+  "settings": {
+    "siteName": "Квиз-платформа",
+    "tagline": "Интерактивный квиз",
+    "subtitle": "Выберите тему и проверьте свои знания",
+    "logoUrl": "",
+    "bodyBackgroundUrl": "",
+    "heroBackgroundUrl": "",
+    "faviconUrl": "",
+    "timeLimit": 60,
+    "colors": {
+      "primary": "#2563eb",
+      "primaryDark": "#1e40af",
+      "gold": "#475569",
+      "accent": "#059669"
+    },
+    "texts": {
+      "menuKicker": "Быстрый старт",
+      "menuTitle": "Выберите тему",
+      "menuCopy": "Темы запускаются в один клик. На каждый вопрос даётся ограниченное время, а при ошибке открывается окно с пояснением.",
+      "menuHint": "Сначала выберите тему, затем отвечайте на вопросы подряд. Итоговый результат можно сохранить в рейтинг.",
+      "navKicker": "Навигация",
+      "navTitle": "Что можно сделать",
+      "factLabel": "Пояснение",
+      "defaultFact": "Пояснение для этого вопроса пока не добавлено.",
+      "leaderboardKicker": "Рейтинг игроков",
+      "leaderboardTitle": "Доска почёта",
+      "feedbackKicker": "Диалог с посетителями",
+      "feedbackTitle": "Обратная связь",
+      "statThemesLabel": "тем",
+      "statTimeLabel": "сек/вопрос",
+      "statLeadersLabel": "в рейтинге"
+    }
+  },
+  "games": [],
+  "leaders": [],
+  "feedback": []
+}

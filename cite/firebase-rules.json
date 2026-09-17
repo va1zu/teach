@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "quizData": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
